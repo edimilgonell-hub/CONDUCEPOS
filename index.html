@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MARTINEZ BATISTA COMERCIAL SRL - Conduces y Ventas 80mm</title>
+    <meta name="description" content="Sistema de facturación, conduces de entrega con saldo $25,000, cálculo de devuelta, impresión térmica 80mm y enlace a Google Sheets." />
+    <meta property="og:title" content="MARTINEZ BATISTA COMERCIAL SRL - Conduces y Ventas 80mm" />
+    <meta property="og:description" content="Sistema de facturación, conduces de entrega con saldo $25,000, cálculo de devuelta, impresión térmica 80mm y enlace a Google Sheets." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Safe fetch getter/setter shim to prevent window.fetch getter-only TypeError -->
+    <script>
+      (function() {
+        try {
+          var originalFetch = window.fetch ? window.fetch.bind(window) : null;
+          var activeFetch = originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return activeFetch; },
+            set: function(val) { activeFetch = val; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (err) {
+          try {
+            var winProto = Object.getPrototypeOf(window);
+            if (winProto && Object.getOwnPropertyDescriptor(winProto, 'fetch')) {
+              var desc = Object.getOwnPropertyDescriptor(winProto, 'fetch');
+              Object.defineProperty(winProto, 'fetch', {
+                get: desc.get,
+                set: function(v) {},
+                configurable: true
+              });
+            }
+          } catch (e2) {}
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "ConducePOS - Facturación y Conduces de Control",
+  "description": "Sistema ágil de ventas tipo conduce con límite de saldo de 25,000, cálculo de devuelta, impresión automática de doble recibo con firmas y enlace a Google Sheets con Apps Script.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

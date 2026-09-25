@@ -1,0 +1,104 @@
+[
+  {
+    "id": "cnd-rec-1790352676523",
+    "conduceNumber": "CND-2026-0002",
+    "date": "2026-09-25T16:11:16.523Z",
+    "formattedDate": "25 sept 2026, 12:11 p. m.",
+    "client": {
+      "id": "cli-1",
+      "name": "Juan Alberto Rosario Pérez",
+      "documentId": "001-1458923-4",
+      "phone": "809-555-0142",
+      "initialBalance": 25000,
+      "notes": "Cliente preferencial"
+    },
+    "items": [
+      {
+        "id": "cart-1790352664259-9p5s",
+        "productId": "mb-01",
+        "name": "Carretilla grande",
+        "unit": "Und",
+        "unitPrice": 6000,
+        "quantity": 1,
+        "total": 6000
+      }
+    ],
+    "initialBalance": 25000,
+    "totalCogido": 6000,
+    "devuelta": 19000,
+    "notes": "",
+    "syncedToGoogleSheets": true,
+    "syncTimestamp": "2026-09-25T16:12:27.186Z"
+  },
+  {
+    "id": "cnd-rec-1790352436656",
+    "conduceNumber": "CND-2026-0001",
+    "date": "2026-09-25T16:07:16.656Z",
+    "formattedDate": "25 sept 2026, 12:07 p. m.",
+    "client": {
+      "id": "cli-1790349532602-aqzb",
+      "name": "JUAN MARTINEZ",
+      "documentId": "",
+      "phone": "",
+      "initialBalance": 25000,
+      "notes": ""
+    },
+    "items": [
+      {
+        "id": "cart-1790352435384-8upd",
+        "productId": "mb-17",
+        "name": "Espaldar y cama",
+        "unit": "Juego",
+        "unitPrice": 25000,
+        "quantity": 1,
+        "total": 25000
+      }
+    ],
+    "initialBalance": 25000,
+    "totalCogido": 25000,
+    "devuelta": 0,
+    "notes": "",
+    "syncedToGoogleSheets": true,
+    "syncTimestamp": "2026-09-25T17:00:36.415Z"
+  },
+  {
+    "id": "cnd-rec-1790347460903",
+    "conduceNumber": "CND-2026-0001",
+    "date": "2026-09-25T14:44:20.903Z",
+    "formattedDate": "25 sept 2026, 10:44 a. m.",
+    "client": {
+      "id": "cli-1",
+      "name": "Juan Alberto Rosario Pérez",
+      "documentId": "001-1458923-4",
+      "phone": "809-555-0142",
+      "initialBalance": 25000,
+      "notes": "Cliente preferencial asignado"
+    },
+    "items": [
+      {
+        "id": "cart-1790347437405-436j",
+        "productId": "prod-1790347437398",
+        "name": "CAMA",
+        "unit": "Und",
+        "unitPrice": 18000,
+        "quantity": 1,
+        "total": 18000
+      },
+      {
+        "id": "cart-1790347451079-dz1j",
+        "productId": "prod-1790347451074-n2rg",
+        "name": "FREZER",
+        "unit": "Und",
+        "unitPrice": 7000,
+        "quantity": 1,
+        "total": 7000
+      }
+    ],
+    "initialBalance": 25000,
+    "totalCogido": 25000,
+    "devuelta": 0,
+    "notes": "",
+    "syncedToGoogleSheets": true,
+    "syncTimestamp": "2026-09-25T15:10:01.364Z"
+  }
+]
