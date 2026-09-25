@@ -10,9 +10,23 @@ export const getSavedSpreadsheetInfo = () => {
   };
 };
 
-export const saveSpreadsheetInfo = (id: string, url: string) => {
+export const saveSpreadsheetInfo = (id: string, url: string, ownerEmail?: string) => {
   localStorage.setItem(SPREADSHEET_ID_KEY, id);
   localStorage.setItem(SPREADSHEET_URL_KEY, url);
+  if (ownerEmail) {
+    localStorage.setItem('conduce_google_spreadsheet_owner', ownerEmail);
+  }
+  // Sincronizar con el servidor central para que las demás PCs y teléfonos sepan que la hoja existe y está conectada
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spreadsheetId: id,
+      spreadsheetUrl: url,
+      ownerEmail: ownerEmail || 'edimilgonell@gmail.com',
+      isGoogleDriveConnected: true
+    })
+  }).catch(console.warn);
 };
 
 /**

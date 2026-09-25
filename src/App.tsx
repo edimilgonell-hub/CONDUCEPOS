@@ -34,7 +34,8 @@ import {
   deleteCloudConduce,
   clearCloudConduces,
   fetchSharedConfig,
-  saveSharedConfig
+  saveSharedConfig,
+  SharedCloudConfig
 } from './services/cloudConduceSync';
 import { User } from 'firebase/auth';
 import {
@@ -111,6 +112,7 @@ export default function App() {
   // Records and Google Sheets
   const [records, setRecords] = useState<ConduceRecord[]>(() => getStoredRecords());
   const [sheetsConfig, setSheetsConfig] = useState<GoogleSheetsConfig>(() => getStoredConfig());
+  const [sharedCloudConfig, setSharedCloudConfig] = useState<SharedCloudConfig | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
@@ -247,6 +249,26 @@ export default function App() {
         if (!silent) {
           showToast(`Sincronizado: ${cloudRecords.length} conduces activos.`);
         }
+
+        // Si esta máquina tiene la sesión de Google Drive activa (Edimil),
+        // sube automáticamente a Google Sheets cualquier conduce que haya creado otra máquina
+        const token = await getAccessToken();
+        const driveInfo = getSavedSpreadsheetInfo();
+        if (token && driveInfo.id) {
+          const pending = cloudRecords.filter((r) => !r.syncedToGoogleSheets);
+          if (pending.length > 0) {
+            for (const item of pending) {
+              try {
+                await appendConduceToGoogleSheet(item, token, driveInfo.id);
+                item.syncedToGoogleSheets = true;
+                item.syncTimestamp = new Date().toISOString();
+                saveConduceToCloud(item).catch(console.warn);
+              } catch (e) {
+                console.warn('Error auto-sincronizando conduce de otra PC a Sheets:', e);
+              }
+            }
+          }
+        }
       }
     } catch (err) {
       console.warn('Sync failed:', err);
@@ -261,16 +283,19 @@ export default function App() {
 
     const syncConfig = () => {
       fetchSharedConfig().then((cloudCfg) => {
-        const cloudUrl = cloudCfg?.webAppUrl?.trim();
-        if (cloudUrl && cloudUrl.startsWith('http')) {
-          setSheetsConfig((prev) => {
-            if (!prev.webAppUrl || prev.webAppUrl !== cloudUrl) {
-              const updated: GoogleSheetsConfig = { ...prev, webAppUrl: cloudUrl, autoSync: true };
-              saveStoredConfig(updated);
-              return updated;
-            }
-            return prev;
-          });
+        if (cloudCfg) {
+          setSharedCloudConfig(cloudCfg);
+          const cloudUrl = cloudCfg?.webAppUrl?.trim();
+          if (cloudUrl && cloudUrl.startsWith('http')) {
+            setSheetsConfig((prev) => {
+              if (!prev.webAppUrl || prev.webAppUrl !== cloudUrl) {
+                const updated: GoogleSheetsConfig = { ...prev, webAppUrl: cloudUrl, autoSync: true };
+                saveStoredConfig(updated);
+                return updated;
+              }
+              return prev;
+            });
+          }
         }
       }).catch(console.warn);
     };
@@ -334,7 +359,18 @@ export default function App() {
   // Initialize Firebase Auth listener
   useEffect(() => {
     const unsubscribe = initAuth(
-      (user) => setCurrentUser(user),
+      (user) => {
+        setCurrentUser(user);
+        if (user) {
+          const driveInfo = getSavedSpreadsheetInfo();
+          saveSharedConfig({
+            ownerEmail: user.email || 'edimilgonell@gmail.com',
+            isGoogleDriveConnected: true,
+            ...(driveInfo.id ? { spreadsheetId: driveInfo.id } : {}),
+            ...(driveInfo.url ? { spreadsheetUrl: driveInfo.url } : {})
+          });
+        }
+      },
       () => setCurrentUser(null)
     );
     return () => unsubscribe();
@@ -676,7 +712,15 @@ export default function App() {
 
             {/* Google Sheets connection status and config button */}
             {(() => {
-              const isConnected = Boolean(currentUser || sheetsConfig.webAppUrl);
+              const isDriveDirect = Boolean(currentUser);
+              const isAppsScript = Boolean(sheetsConfig.webAppUrl);
+              const isCentralLinked = Boolean(
+                sharedCloudConfig?.isGoogleDriveConnected ||
+                sharedCloudConfig?.spreadsheetUrl ||
+                sharedCloudConfig?.webAppUrl
+              );
+              const isConnected = isDriveDirect || isAppsScript || isCentralLinked;
+
               return (
                 <button
                   type="button"
@@ -688,17 +732,27 @@ export default function App() {
                   }`}
                   title={
                     isConnected
-                      ? 'Google Sheets Conectado: Los conduces se sincronizan automáticamente'
+                      ? 'Conexión activa con Google Sheets y la Central de Ventas'
                       : 'Google Sheets No Conectado: Haz clic para vincular tu hoja de cálculo'
                   }
                 >
                   <FileSpreadsheet className="w-4 h-4 shrink-0" />
                   <div className="flex items-center gap-1.5 text-left">
                     <span className="hidden sm:inline">Google Sheets:</span>
-                    {isConnected ? (
+                    {isDriveDirect ? (
                       <span className="flex items-center gap-1 text-emerald-300">
                         <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        <span>{currentUser ? 'Drive Conectado' : 'Conectado'}</span>
+                        <span>Drive Conectado</span>
+                      </span>
+                    ) : isAppsScript ? (
+                      <span className="flex items-center gap-1 text-teal-300">
+                        <span className="w-2 h-2 rounded-full bg-teal-400"></span>
+                        <span>Apps Script Activo</span>
+                      </span>
+                    ) : isCentralLinked ? (
+                      <span className="flex items-center gap-1 text-emerald-300">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span>Central Conectada</span>
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 text-amber-300">
@@ -844,6 +898,7 @@ export default function App() {
           records={records}
           currentUser={currentUser}
           onUserChange={setCurrentUser}
+          sharedCloudConfig={sharedCloudConfig}
         />
       )}
 

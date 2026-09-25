@@ -29,6 +29,7 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
+import { SharedCloudConfig } from '../services/cloudConduceSync';
 
 interface GoogleSheetsModalProps {
   config: GoogleSheetsConfig;
@@ -37,6 +38,7 @@ interface GoogleSheetsModalProps {
   records: ConduceRecord[];
   currentUser: User | null;
   onUserChange: (user: User | null) => void;
+  sharedCloudConfig?: SharedCloudConfig | null;
 }
 
 export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
@@ -45,18 +47,26 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
   onClose,
   records,
   currentUser,
-  onUserChange
+  onUserChange,
+  sharedCloudConfig
 }) => {
+  const isCentralLinked = Boolean(
+    sharedCloudConfig?.isGoogleDriveConnected ||
+    sharedCloudConfig?.spreadsheetUrl ||
+    sharedCloudConfig?.webAppUrl
+  );
+
   const [activeTab, setActiveTab] = useState<'directDrive' | 'appsScript' | 'code' | 'export'>(
-    currentUser ? 'directDrive' : 'appsScript'
+    currentUser || isCentralLinked ? 'directDrive' : 'appsScript'
   );
 
   // Direct Google Drive state
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isCreatingSheet, setIsCreatingSheet] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [driveStatus, setDriveStatus] = useState<string>('');
   const [spreadsheetUrl, setSpreadsheetUrl] = useState<string | null>(() => {
-    return getSavedSpreadsheetInfo().url;
+    return getSavedSpreadsheetInfo().url || sharedCloudConfig?.spreadsheetUrl || null;
   });
 
   // Apps Script Webhook state
@@ -261,66 +271,90 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
           {/* ============================================================== */}
           {activeTab === 'directDrive' && (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-2">
-                <div className="font-bold flex items-center gap-2 text-sm text-amber-900">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-                  <span>Esta pestaña es EXCLUSIVA para Edimil (Administrador)</span>
+              {/* Central Connection Banner if active */}
+              {isCentralLinked && !currentUser && (
+                <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl space-y-3 shadow-xs">
+                  <div className="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <span>¡Esta Terminal está Sincronizada con la Hoja Central!</span>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    Esta computadora o celular está vinculada al sistema central. La hoja de Google Sheets de <strong>MARTINEZ BATISTA</strong> está conectada por el administrador (<strong>{sharedCloudConfig?.ownerEmail || 'edimilgonell@gmail.com'}</strong>).
+                  </p>
+                  <p className="text-xs text-emerald-900 font-semibold flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>No necesitas iniciar sesión con otra cuenta de Google aquí. Todos los conduces emitidos se sincronizan automáticamente.</span>
+                  </p>
+                  {(sharedCloudConfig?.spreadsheetUrl || spreadsheetUrl) && (
+                    <div className="pt-1">
+                      <a
+                        href={sharedCloudConfig?.spreadsheetUrl || spreadsheetUrl || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition shadow-xs"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Abrir Hoja de Google Sheets en Google Drive</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
-                <p className="text-amber-800 leading-relaxed">
-                  Si estás en la computadora de un cajero o en la cuenta <strong>martinezbcomercial@gmail.com</strong>, <strong>NO presiones el botón de Google abajo</strong>. Google lo bloqueará con <em>Error 403: access_denied</em>. 
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('appsScript')}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <Laptop className="w-4 h-4" />
-                  <span>Haz clic aquí: Conectar esta PC en la pestaña "Otras Computadoras"</span>
-                </button>
-              </div>
+              )}
 
               {!currentUser ? (
-                <div className="py-6 flex flex-col items-center justify-center space-y-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-semibold text-slate-700 text-center">
-                    Solo Edimil: Iniciar sesión con edimilgonell@gmail.com para vincular tu Drive:
-                  </p>
-
-                  {/* Official Google Sign-In Button */}
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={isSigningIn}
-                    className="gsi-material-button shadow-md hover:shadow-lg transition-all"
-                  >
-                    <div className="gsi-material-button-state"></div>
-                    <div className="gsi-material-button-content-wrapper">
-                      <div className="gsi-material-button-icon">
-                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block' }}>
-                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                          <path fill="none" d="M0 0h48v48H0z"></path>
-                        </svg>
-                      </div>
-                      <span className="gsi-material-button-contents">
-                        {isSigningIn ? 'Conectando con Google...' : 'Continuar con Google'}
-                      </span>
-                    </div>
-                  </button>
-
-                  <div className="mt-3 max-w-md p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-left text-xs text-amber-900 space-y-1">
-                    <div className="font-bold flex items-center gap-1.5 text-amber-950">
-                      <span>⚠️ ¿Por qué da error al poner el correo de otra PC?</span>
-                    </div>
-                    <p className="text-[11px] leading-relaxed text-amber-800">
-                      Google solo autoriza la cuenta principal administradora. Si otra computadora intenta iniciar sesión con su propio correo, Google bloquea el acceso o crearía una hoja separada en su Google Drive privado.
-                    </p>
-                    <p className="text-[11px] font-semibold text-emerald-800 pt-1">
-                      👉 <strong>Solución recomendada para red multi-PC:</strong> Ve a la pestaña <strong>"Forma 2: Apps Script (Multi-PC)"</strong>. Con ese método, <strong>ninguna PC necesita correo ni permisos de Google</strong>; todas enviarán los conduces a tu misma hoja de cálculo centralizada.
-                    </p>
+                isCentralLinked && !showAdminLogin ? (
+                  <div className="text-center py-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminLogin(true)}
+                      className="text-xs text-slate-500 hover:text-slate-800 underline font-semibold cursor-pointer"
+                    >
+                      ¿Eres el Administrador Edimil? Iniciar sesión con edimilgonell@gmail.com
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="py-6 flex flex-col items-center justify-center space-y-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-semibold text-slate-700 text-center">
+                      Solo Edimil: Iniciar sesión con edimilgonell@gmail.com para vincular tu Drive:
+                    </p>
+
+                    {/* Official Google Sign-In Button */}
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isSigningIn}
+                      className="gsi-material-button shadow-md hover:shadow-lg transition-all"
+                    >
+                      <div className="gsi-material-button-state"></div>
+                      <div className="gsi-material-button-content-wrapper">
+                        <div className="gsi-material-button-icon">
+                          <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style={{ display: 'block' }}>
+                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                            <path fill="none" d="M0 0h48v48H0z"></path>
+                          </svg>
+                        </div>
+                        <span className="gsi-material-button-contents">
+                          {isSigningIn ? 'Conectando con Google...' : 'Continuar con Google'}
+                        </span>
+                      </div>
+                    </button>
+
+                    <div className="mt-3 max-w-md p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-left text-xs text-amber-900 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                        <span>⚠️ ¿Por qué da error al poner el correo de otra PC?</span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-amber-800">
+                        Google solo autoriza la cuenta principal administradora. Si otra computadora intenta iniciar sesión con su propio correo, Google bloquea el acceso o crearía una hoja separada en su Google Drive privado.
+                      </p>
+                      <p className="text-[11px] font-semibold text-emerald-800 pt-1">
+                        👉 <strong>Solución recomendada para red multi-PC:</strong> Ve a la pestaña <strong>"Forma 2: Apps Script (Multi-PC)"</strong>. Con ese método, <strong>ninguna PC necesita correo ni permisos de Google</strong>; todas enviarán los conduces a tu misma hoja de cálculo centralizada.
+                      </p>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
                   <div className="flex items-center justify-between">

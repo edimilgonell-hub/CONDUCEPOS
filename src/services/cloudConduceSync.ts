@@ -143,7 +143,16 @@ export async function clearCloudConduces(allExistingRecords: ConduceRecord[] = [
   }
 }
 
-export async function fetchSharedConfig(): Promise<{ webAppUrl?: string; autoSync?: boolean } | null> {
+export interface SharedCloudConfig {
+  webAppUrl?: string;
+  autoSync?: boolean;
+  spreadsheetId?: string;
+  spreadsheetUrl?: string;
+  ownerEmail?: string;
+  isGoogleDriveConnected?: boolean;
+}
+
+export async function fetchSharedConfig(): Promise<SharedCloudConfig | null> {
   try {
     const res = await fetch('/api/config', {
       headers: { Accept: 'application/json' }
@@ -156,7 +165,7 @@ export async function fetchSharedConfig(): Promise<{ webAppUrl?: string; autoSyn
   }
 }
 
-export async function saveSharedConfig(cfg: { webAppUrl?: string; autoSync?: boolean }): Promise<void> {
+export async function saveSharedConfig(cfg: Partial<SharedCloudConfig>): Promise<void> {
   try {
     await fetch('/api/config', {
       method: 'POST',
