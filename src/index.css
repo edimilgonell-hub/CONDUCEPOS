@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* 80mm Thermal Printer Print Optimization */
+  @media print {
+    @page {
+      size: auto;
+      margin: 0mm !important;
+    }
+
+    /* Reset all root containers to prevent overflow clipping or scrollbar artifacts */
+    html, body, #root, #root > div {
+      background: #ffffff !important;
+      color: #000000 !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      width: 72mm !important;
+      max-width: 72mm !important;
+      min-height: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+      font-size: 9.5pt !important;
+      font-family: "Courier New", Courier, monospace, monospace !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Hide any non-printable elements */
+    .no-print,
+    header,
+    footer,
+    nav,
+    aside,
+    button:not(.allow-print) {
+      display: none !important;
+    }
+
+    .print-only {
+      display: block !important;
+    }
+
+    /* Un-fix modal overlays so printing flows naturally onto thermal paper */
+    .fixed,
+    [class*="fixed"],
+    .relative,
+    [class*="relative"] {
+      position: static !important;
+      inset: auto !important;
+      transform: none !important;
+      max-height: none !important;
+      height: auto !important;
+      overflow: visible !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      padding: 0 !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      max-width: 72mm !important;
+    }
+
+    /* Sequential 80mm ticket roll layout */
+    .print-receipt-sheet {
+      display: block !important;
+      width: 72mm !important;
+      max-width: 72mm !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* High contrast thermal ticket cards */
+    .print-receipt-card {
+      display: block !important;
+      width: 72mm !important;
+      max-width: 72mm !important;
+      margin: 0 auto !important;
+      border: 1px dashed #000000 !important;
+      padding: 3mm 1.5mm !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-sizing: border-box !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+
+    /* Ensure all text inside tickets is high-contrast pure black */
+    .print-receipt-card * {
+      color: #000000 !important;
+      border-color: #000000 !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Cut tear line / page break separator */
+    .thermal-tear-line {
+      display: block !important;
+      width: 100% !important;
+      text-align: center !important;
+      border-top: 1.5px dashed #000000 !important;
+      margin: 4mm 0 !important;
+      padding-top: 1.5mm !important;
+      font-size: 8pt !important;
+      font-family: monospace !important;
+      color: #000000 !important;
+    }
+
+    /* Force auto page break when enabled */
+    .print-page-break {
+      page-break-after: always !important;
+      break-after: page !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      visibility: hidden !important;
+    }
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
+/* Google Sign-in button styles */
+.gsi-material-button {
+  user-select: none;
+  background-color: #131314;
+  border: 1px solid #8e918f;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #e3e3e3;
+  cursor: pointer;
+  font-family: 'Roboto', arial, sans-serif;
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .218s, border-color .218s;
+}
+
+.gsi-material-button:hover {
+  background-color: #202124;
+  border-color: #a8aba9;
+}
+
+.gsi-material-button-content-wrapper {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button-icon {
+  height: 20px;
+  margin-right: 12px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  flex-grow: 1;
+  font-family: 'Roboto', arial, sans-serif;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
