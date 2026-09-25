@@ -19,6 +19,7 @@ import { EditConduceModal } from './components/EditConduceModal';
 import { ClientManagerModal } from './components/ClientManagerModal';
 import { initAuth, getAccessToken } from './services/googleAuth';
 import { appendConduceToGoogleSheet, getSavedSpreadsheetInfo } from './services/googleDriveSheets';
+import { CLIENT_LIMIT, getClientSpent } from './services/clientLimit';
 import { User } from 'firebase/auth';
 import {
   Receipt,
@@ -121,6 +122,12 @@ export default function App() {
 
   // Conduce Edit / Delete Handlers
   const handleSaveEditedRecord = (updatedRecord: ConduceRecord) => {
+    const previousSpent = getClientSpent(records, updatedRecord.client, updatedRecord.id);
+    if (Math.round((previousSpent + updatedRecord.totalCogido) * 100) > CLIENT_LIMIT * 100) {
+      showToast('Venta bloqueada: este cliente supera el límite acumulado de $25,000.00.', 'error');
+      return;
+    }
+    updatedRecord = { ...updatedRecord, devuelta: CLIENT_LIMIT - previousSpent - updatedRecord.totalCogido };
     const updatedList = records.map((r) =>
       r.id === updatedRecord.id ? updatedRecord : r
     );
@@ -287,16 +294,11 @@ export default function App() {
 
   // Emit Conduce Action
   const handleEmitConduce = async () => {
-    const INITIAL_BALANCE = 25000;
+    const INITIAL_BALANCE = CLIENT_LIMIT;
     const totalCogido = cartItems.reduce((acc, it) => acc + it.total, 0);
 
     if (totalCogido <= 0 || cartItems.length === 0) {
       showToast('Debe agregar al menos un producto al conduce.', 'error');
-      return;
-    }
-
-    if (totalCogido > INITIAL_BALANCE) {
-      showToast(`¡El monto ($${totalCogido.toLocaleString()}) NO puede pasar de $25,000.00!`, 'error');
       return;
     }
 
@@ -305,7 +307,12 @@ export default function App() {
       return;
     }
 
-    const devuelta = INITIAL_BALANCE - totalCogido;
+    const previousSpent = getClientSpent(records, currentClient);
+    if (Math.round((previousSpent + totalCogido) * 100) > INITIAL_BALANCE * 100) {
+      showToast(`Venta bloqueada para ${currentClient.name}: lleva $${previousSpent.toLocaleString('es-DO', { minimumFractionDigits: 2 })} y esta venta supera el límite acumulado de $25,000.00.`, 'error');
+      return;
+    }
+    const devuelta = INITIAL_BALANCE - previousSpent - totalCogido;
     const dateObj = new Date();
     const sequenceNumber = (records.length + 1).toString().padStart(4, '0');
     const conduceNumber = `CND-${dateObj.getFullYear()}-${sequenceNumber}`;
@@ -444,6 +451,7 @@ export default function App() {
   });
 
   const totalCogido = cartItems.reduce((acc, it) => acc + it.total, 0);
+  const previousSpent = getClientSpent(records, currentClient);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
@@ -579,6 +587,7 @@ export default function App() {
             onClientChange={setCurrentClient}
             frequentClients={frequentClients}
             totalCogido={totalCogido}
+            previousSpent={previousSpent}
             onOpenClientManager={() => setShowClientManagerModal(true)}
           />
 
@@ -608,6 +617,7 @@ export default function App() {
             onToggleAutoPrint={setAutoPrintEnabled}
             onEmitConduce={handleEmitConduce}
             clientName={currentClient.name}
+            previousSpent={previousSpent}
           />
         </div>
       </main>
