@@ -14,6 +14,7 @@ interface ConduceCartProps {
   onToggleAutoPrint: (enabled: boolean) => void;
   onEmitConduce: () => void;
   clientName: string;
+  previousSpent: number;
 }
 
 export const ConduceCart: React.FC<ConduceCartProps> = ({
@@ -27,14 +28,16 @@ export const ConduceCart: React.FC<ConduceCartProps> = ({
   autoPrintEnabled,
   onToggleAutoPrint,
   onEmitConduce,
-  clientName
+  clientName,
+  previousSpent
 }) => {
   const INITIAL_BALANCE = 25000;
   const totalCogido = items.reduce((acc, it) => acc + it.total, 0);
-  const devuelta = INITIAL_BALANCE - totalCogido;
-  const isOverLimit = totalCogido > INITIAL_BALANCE;
+  const devuelta = INITIAL_BALANCE - previousSpent - totalCogido;
+  const isOverLimit = Math.round((previousSpent + totalCogido) * 100) > INITIAL_BALANCE * 100;
+  const isAtLimit = Math.round(previousSpent * 100) >= INITIAL_BALANCE * 100;
   const isZero = totalCogido <= 0 || items.length === 0;
-  const canEmit = !isOverLimit && !isZero && clientName.trim().length > 0;
+  const canEmit = !isOverLimit && !isAtLimit && !isZero && clientName.trim().length > 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
@@ -159,6 +162,10 @@ export const ConduceCart: React.FC<ConduceCartProps> = ({
           </div>
 
           <div className="flex justify-between items-center text-rose-300 font-medium">
+            <span>Ventas anteriores en este equipo:</span>
+            <span className="font-mono font-bold">${previousSpent.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div className="flex justify-between items-center text-rose-300 font-medium">
             <span>Total Cogido (Facturado):</span>
             <span className="font-mono font-black text-sm text-rose-400">
               - ${totalCogido.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
@@ -183,12 +190,17 @@ export const ConduceCart: React.FC<ConduceCartProps> = ({
         </div>
 
         {/* Validation Warning Messages */}
+        {isAtLimit && (
+          <div className="p-2.5 bg-rose-950/80 border border-rose-600/80 rounded-lg text-rose-200 text-xs">
+            Este cliente ya agotó su límite acumulado de $25,000.00. Venta bloqueada.
+          </div>
+        )}
         {isOverLimit && (
           <div className="p-2.5 bg-rose-950/80 border border-rose-600/80 rounded-lg text-rose-200 text-xs flex items-start gap-2">
             <AlertOctagon className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div>
               <strong className="block font-bold">¡NO PUEDE PASAR DE $25,000.00!</strong>
-              El monto acumulado excede el saldo permitido por ${(totalCogido - INITIAL_BALANCE).toLocaleString('es-DO', { minimumFractionDigits: 2 })}. Reduzca la cantidad de productos para facturar.
+              Las ventas de este equipo más esta venta exceden el límite por ${(previousSpent + totalCogido - INITIAL_BALANCE).toLocaleString('es-DO', { minimumFractionDigits: 2 })}. No se puede emitir otro conduce para este cliente.
             </div>
           </div>
         )}
