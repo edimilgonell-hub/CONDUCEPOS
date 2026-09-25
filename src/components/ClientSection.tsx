@@ -7,6 +7,7 @@ interface ClientSectionProps {
   onClientChange: (updated: Client) => void;
   frequentClients: Client[];
   totalCogido: number;
+  previousSpent: number;
   onOpenClientManager?: () => void;
 }
 
@@ -15,12 +16,15 @@ export const ClientSection: React.FC<ClientSectionProps> = ({
   onClientChange,
   frequentClients,
   totalCogido,
+  previousSpent,
   onOpenClientManager
 }) => {
   const balance = 25000;
-  const devuelta = balance - totalCogido;
-  const percentUsed = Math.min(100, Math.max(0, (totalCogido / balance) * 100));
-  const isOverLimit = totalCogido > balance;
+  const cumulativeTotal = previousSpent + totalCogido;
+  const devuelta = balance - cumulativeTotal;
+  const percentUsed = Math.min(100, Math.max(0, (cumulativeTotal / balance) * 100));
+  const isOverLimit = Math.round(cumulativeTotal * 100) > balance * 100;
+  const isAtLimit = Math.round(previousSpent * 100) >= balance * 100;
 
   // Search state
   const [query, setQuery] = useState(client.name || '');
@@ -373,14 +377,14 @@ export const ClientSection: React.FC<ClientSectionProps> = ({
                   isOverLimit ? 'text-rose-700' : 'text-rose-300'
                 }`}
               >
-                Total Cogido
+                Acumulado en este equipo
               </div>
               <div
                 className={`text-xs sm:text-sm font-black font-mono mt-0.5 ${
                   isOverLimit ? 'text-rose-700' : 'text-rose-400'
                 }`}
               >
-                ${totalCogido.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                ${cumulativeTotal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
               </div>
             </div>
 
@@ -414,7 +418,7 @@ export const ClientSection: React.FC<ClientSectionProps> = ({
             <div className="flex justify-between text-[10px] font-semibold mb-1 opacity-80">
               <span>Consumo del saldo asignado:</span>
               <span>
-                {percentUsed.toFixed(1)}% ({totalCogido.toLocaleString()} / 25,000)
+                {percentUsed.toFixed(1)}% ({cumulativeTotal.toLocaleString()} / 25,000)
               </span>
             </div>
             <div className="w-full bg-slate-700/50 rounded-full h-2 overflow-hidden">
@@ -433,9 +437,14 @@ export const ClientSection: React.FC<ClientSectionProps> = ({
 
           {isOverLimit && (
             <p className="mt-2 text-xs font-bold text-rose-700 bg-rose-100 p-2 rounded border border-rose-300 text-center">
-              ⚠️ La factura excede los $25,000 por $
-              {(totalCogido - 25000).toLocaleString('es-DO', { minimumFractionDigits: 2 })}. Por
-              regla comercial, el total NO puede ser mayor a $25,000.
+              ⚠️ Las ventas acumuladas de este cliente superarían $25,000 por $
+              {(cumulativeTotal - balance).toLocaleString('es-DO', { minimumFractionDigits: 2 })}.
+              No se puede emitir este conduce.
+            </p>
+          )}
+          {isAtLimit && !isOverLimit && (
+            <p className="mt-2 text-xs font-bold text-rose-700 bg-rose-100 p-2 rounded border border-rose-300 text-center">
+              Este cliente ya agotó su límite de $25,000. No se puede realizar otra venta.
             </p>
           )}
         </div>
