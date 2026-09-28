@@ -30,7 +30,7 @@ export const DualReceiptView: React.FC<DualReceiptViewProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'thermal80mm' | 'sideBySide'>('thermal80mm');
   // Disabled by default: page breaks cause thermal printers to feed 15cm of blank Letter paper!
-  const [autoCutBetweenTickets, setAutoCutBetweenTickets] = useState(false);
+  const [autoCutBetweenTickets, setAutoCutBetweenTickets] = useState(true);
   const [printTicketMode, setPrintTicketMode] = useState<'both' | 'client' | 'commerce'>('both');
 
   const handlePrintClick = () => {
